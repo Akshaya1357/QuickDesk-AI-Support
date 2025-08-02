@@ -1,19 +1,31 @@
-import streamlit as st
-from cohere_config import generate_reply
+import os
+import requests
 
-st.set_page_config(page_title="SmartHelp AI", layout="centered")
+API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
+headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 
-st.title("🧠 SmartHelp - AI Ticket Assistant")
-st.write("Get smart, AI-generated replies for support tickets instantly!")
+def generate_reply(description):
+    prompt = f"User: {description}\nSupport Agent:"
+    payload = {"inputs": prompt}
 
-description = st.text_area("📝 Describe your issue", height=150)
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
 
-if st.button("Generate Reply"):
-    if description.strip():
-        with st.spinner("Generating smart reply..."):
-            reply, category = generate_reply(description)
-            st.success(f"✅ AI Suggested Reply:\n\n{reply}")
-            st.info(f"🗂️ Predicted Category: {category}")
-    else:
-        st.warning("Please enter a ticket description to cont
+        reply = result[0]['generated_text'].replace(prompt, "").strip()
+
+        # Rule-based categorization
+        if "payment" in description.lower():
+            category = "Billing"
+        elif "error" in description.lower() or "crash" in description.lower():
+            category = "Technical"
+        else:
+            category = "General"
+
+        return reply, category
+
+    except Exception as e:
+        return f"⚠️ Error generating reply: {str(e)}", "Error"
+
 
