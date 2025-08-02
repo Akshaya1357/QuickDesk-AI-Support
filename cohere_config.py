@@ -1,20 +1,21 @@
 import os
-import cohere
+import requests
 
-co = cohere.Client(os.getenv("COHERE_API_KEY"))
+API_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
+headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 
 def generate_reply(description):
-    prompt = f"A customer submitted a support ticket: '{description}'. Suggest a polite and helpful response."
+    prompt = f"User: {description}\nSupport Agent:"
+    payload = {"inputs": prompt}
 
     try:
-        response = co.generate(
-            model='command',
-            prompt=prompt,
-            max_tokens=100
-        )
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
 
-        reply = response.generations[0].text.strip()
+        reply = result[0]['generated_text'].replace(prompt, "").strip()
 
+        # Rule-based categorization
         if "payment" in description.lower():
             category = "Billing"
         elif "error" in description.lower() or "crash" in description.lower():
