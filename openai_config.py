@@ -1,18 +1,18 @@
 import os
 import requests
 
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
 headers = {"Authorization": f"Bearer {os.getenv('HF_TOKEN')}"}
 
 def generate_reply(description):
-    prompt = f"<s>[INST] A user submitted a support ticket saying: '{description}'\nSuggest a helpful reply. [/INST]"
+    prompt = f"Suggest a helpful customer support reply to: {description}"
 
     try:
         response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
         response.raise_for_status()
         result = response.json()
 
-        reply = result[0]["generated_text"].replace(prompt, "").strip()
+        reply = result[0]["generated_text"].strip()
 
         if "payment" in description.lower():
             category = "Billing"
