@@ -25,3 +25,4 @@ def generate_reply(description):
 
     except Exception as e:
         return f"⚠️ Error generating reply: {str(e)}", "Error"
+
